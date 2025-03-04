@@ -6,12 +6,13 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
   public GameObject bulletPrefab;
-
   public Transform shottingOffset;
 
+  Animator playerAnimator;
   void Start()
   {
     Enemy.OnEnemyDied += EnemyOnOnEnemyDied;
+    playerAnimator = GetComponent<Animator>();
   }
 
   void OnDestroy()
@@ -30,6 +31,7 @@ public class Player : MonoBehaviour
   {
     if (Input.GetKeyDown(KeyCode.Space))
     { 
+      playerAnimator.SetTrigger("Shoot Trigger");
       GameObject shot = Instantiate(bulletPrefab, shottingOffset.position, Quaternion.identity); 
       Debug.Log("Bang!");
 
