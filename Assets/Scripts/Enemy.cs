@@ -7,14 +7,19 @@ public class Enemy : MonoBehaviour
     public delegate void EnemyDied(int points);
     public static event EnemyDied OnEnemyDied;
     
-    // Start is called before the first frame update
     void OnCollisionEnter2D(Collision2D collision)
     {
-      Debug.Log("Ouch!");
-      Destroy(collision.gameObject);
-      
-      OnEnemyDied?.Invoke(3);
-      
-      //todo kill enemy
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            Destroy(collision.gameObject);
+        }
+        else if (collision.gameObject.CompareTag("PlayerBullet"))
+        {
+            Destroy(collision.gameObject);
+            Debug.Log("Enemy died: 10 points");
+            OnEnemyDied?.Invoke(10);
+        }
+        
+        Destroy(gameObject);
     }
 }

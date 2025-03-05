@@ -6,25 +6,16 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
   public GameObject bulletPrefab;
-  public Transform shottingOffset;
+  public Transform shootingOffset;
+  public delegate void PlayerDied();
+  public static event PlayerDied OnPlayerDied;
 
   Animator playerAnimator;
+  
   void Start()
   {
-    Enemy.OnEnemyDied += EnemyOnOnEnemyDied;
     playerAnimator = GetComponent<Animator>();
   }
-
-  void OnDestroy()
-  {
-    Enemy.OnEnemyDied -= EnemyOnOnEnemyDied;
-  }
-
-  void EnemyOnOnEnemyDied(int points)
-  {
-    Debug.Log($"I know about dead enemy, points: {points}");
-  }
-  
   
   // Update is called once per frame
   void Update()
@@ -32,10 +23,19 @@ public class Player : MonoBehaviour
     if (Input.GetKeyDown(KeyCode.Space))
     { 
       playerAnimator.SetTrigger("Shoot Trigger");
-      GameObject shot = Instantiate(bulletPrefab, shottingOffset.position, Quaternion.identity); 
-      Debug.Log("Bang!");
-
+      GameObject shot = Instantiate(bulletPrefab, shootingOffset.position, Quaternion.identity); 
+      Physics2D.IgnoreCollision(GetComponent<Collider2D>(), shot.GetComponent<Collider2D>());
+      
       //Destroy(shot, 3f);
     }
+  }
+  
+  void OnCollisionEnter2D(Collision2D collision)
+  {
+    Destroy(collision.gameObject);
+      
+    OnPlayerDied?.Invoke();
+      
+    //todo kill player
   }
 }
