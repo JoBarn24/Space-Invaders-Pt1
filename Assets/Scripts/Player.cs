@@ -53,7 +53,6 @@ public class Player : MonoBehaviour
   void OnDisable()
   {
     GameManagerScript.OnRestartGame -= RespawnPlayer;
-
   }
 
   void RespawnPlayer()
