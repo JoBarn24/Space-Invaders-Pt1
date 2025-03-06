@@ -6,6 +6,11 @@ TagManager:
   tags:
   - PlayerBullet
   - Enemy
+  - Barrier
+  - Enemy2
+  - Enemy3
+  - Enemy4
+  - Enemy1
   layers:
   - Default
   - TransparentFX
