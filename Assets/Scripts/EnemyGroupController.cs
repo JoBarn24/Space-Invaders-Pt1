@@ -11,50 +11,18 @@ public class EnemyGroupController : MonoBehaviour
     public int cols = 5;
     public float speed = 1f;
     public float speedIncreaseRate = 0.1f;
+    public delegate void GameOver();
+    public static event GameOver OnGameOver;
 
     private Vector3 direction = Vector3.right;
+    private int totalEnemies = 0;
+    private bool gameOver = false;
 
     void Start()
     {
         Enemy.OnEnemyDied += HandleEnemyDeath;
-
-        for (int row = 0; row < rows; row++)
-        {
-            float width = cols - 1;
-            float height = rows - 1;
-            Vector2 center = new Vector2(-width / 2, -height / 2 + 2f);
-            Vector3 rowPos = new Vector3(center.x, center.y + row, 0f);
-
-            
-            if (row == 0)
-            {
-                prefab = enemy4Prefab;
-            }
-            else if (row == 1)
-            {
-                prefab = enemy3Prefab;
-            }
-            else if (row == 2)
-            {
-                prefab = enemy2Prefab;
-            }
-            else
-            {
-                prefab = enemy1Prefab;
-            }
-
-
-            for (int col = 0; col < cols; col++)
-            {
-                GameObject enemy = Instantiate(prefab, transform.position, Quaternion.identity);
-                
-                Vector3 position = rowPos;
-                position.x += col;
-                enemy.transform.localPosition = position;
-
-                enemy.transform.parent = transform;
-            }
-        }
+        GameManagerScript.OnRestartGame += DestroyEnemies;
+        SpawnEnemies();
     }
 
     void Update()
@@ -75,6 +43,12 @@ public class EnemyGroupController : MonoBehaviour
         {
             AdvanceRow();
         }
+
+        if (totalEnemies <= 0 && !gameOver)
+        {
+            gameOver = true;
+            OnGameOver?.Invoke();
+        }
     }
 
     void AdvanceRow()
@@ -89,10 +63,73 @@ public class EnemyGroupController : MonoBehaviour
     private void HandleEnemyDeath(int points)
     {
         speed += speedIncreaseRate;
+        totalEnemies--;
+        Debug.Log("Enemies Remaining: " + totalEnemies);
+
+        if (totalEnemies <= 0 && !gameOver)
+        {
+            gameOver = true;
+            OnGameOver?.Invoke();
+        }
     }
 
     void OnDestroy()
     {
         Enemy.OnEnemyDied -= HandleEnemyDeath;
+        GameManagerScript.OnRestartGame -= DestroyEnemies;
+    }
+
+    void SpawnEnemies()
+    {
+        totalEnemies = rows * cols;
+
+        for (int row = 0; row < rows; row++)
+        {
+            float width = cols - 1;
+            float height = rows - 1;
+            Vector2 center = new Vector2(-width / 2, -height / 2 + 2f);
+            Vector3 rowPos = new Vector3(center.x, center.y + row, 0f);
+
+            if (row == 0)
+            {
+                prefab = enemy1Prefab;
+            }
+            else if (row == 1)
+            {
+                prefab = enemy2Prefab;
+            }
+            else if (row == 2)
+            {
+                prefab = enemy3Prefab;
+            }
+            else
+            {
+                prefab = enemy4Prefab;
+            }
+
+            for (int col = 0; col < cols; col++)
+            {
+                GameObject enemy = Instantiate(prefab, transform.position, Quaternion.identity);
+
+                Vector3 position = rowPos;
+                position.x += col;
+                enemy.transform.localPosition = position;
+
+                enemy.transform.parent = transform;
+            }
+        }
+
+        gameOver = false;
+    }
+
+    void DestroyEnemies()
+    {
+        foreach (Transform child in transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        SpawnEnemies();
     }
 }
+
