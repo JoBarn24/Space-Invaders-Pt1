@@ -3,53 +3,71 @@ using UnityEngine;
 public class EnemyGroupController : MonoBehaviour
 {
     public GameObject enemyPrefab;
-    public int numRows = 5;
-    public int numCols = 5;
-    public float horizontalSpeed = 3f;
-    public float verticalSpeed = 1f;
-    public float edge = 0.5f;
+    public int rows = 4;
+    public int cols = 5;
+    public float speed = 1f;
 
-    private Vector2 moveDirection = Vector2.right;
-    
+    private Vector3 direction = Vector3.right;
+
     void Start()
     {
-        SpawnEnemies();
-    }
-
-    void Update()
-    {
-        transform.position += new Vector3(moveDirection.x * horizontalSpeed * Time.deltaTime, 0f, 0f);
-
-        if (isEdgeReached())
+        // Create enemies in a grid formation relative to the parent (this object)
+        for (int row = 0; row < rows; row++)
         {
-            moveDirection = -moveDirection;
-            transform.position += new Vector3(0f, -verticalSpeed, 0f);
-        }
-    }
+            float width = cols - 1;
+            float height = rows - 1;
+            Vector2 center = new Vector2(-width / 2, -height / 2 + 2f);
+            Vector3 rowPos = new Vector3(center.x, center.y + row, 0f);
 
-    void SpawnEnemies()
-    {
-        Vector2 startPos = new Vector2(0f, 4f);
-        for (int row = 0; row < numRows; row++)
-        {
-            for (int col = 0; col < numCols; col++)
+            for (int col = 0; col < cols; col++)
             {
-                Vector2 spawnPos = new Vector2(col * (enemyPrefab.GetComponent<SpriteRenderer>().bounds.size.x + 0.5f),
-                    row * (enemyPrefab.GetComponent<SpriteRenderer>().bounds.size.y + 0.5f));
-                Instantiate(enemyPrefab, spawnPos, Quaternion.identity, transform);
+                // Instantiate the enemy at the position of the parent
+                GameObject enemy = Instantiate(enemyPrefab, transform.position, Quaternion.identity);
+                
+                // Set the enemy's local position relative to the parent
+                Vector3 position = rowPos;
+                position.x += col;
+                enemy.transform.localPosition = position; // Use local position here
+
+                // Ensure the enemy is parented to this group
+                enemy.transform.parent = transform;
             }
         }
     }
 
-    bool isEdgeReached()
+    void Update()
     {
-        float leftEdge = transform.position.x - (numCols * (enemyPrefab.GetComponent<SpriteRenderer>().bounds.size.x + 0.5f) / 2);
-        float rightEdge = transform.position.x + (numCols * (enemyPrefab.GetComponent<SpriteRenderer>().bounds.size.x + 0.5f) / 2);
-        if (leftEdge <= -8 + edge || rightEdge >= 8 - edge)
-        {
-            return true;
-        }
+        // Move the entire group in the current direction (this will move the parent object)
+        transform.position += direction * speed * Time.deltaTime;
 
-        return false;
+        // Calculate the leftmost and rightmost positions of the entire enemy group (parent object)
+        float groupLeft = transform.position.x - (cols * 0.5f); // Left edge of the group
+        float groupRight = transform.position.x + (cols * 0.5f); // Right edge of the group
+
+        // Get the camera's left and right edges in world space
+        Vector3 leftEdge = Camera.main.ViewportToWorldPoint(Vector3.zero);
+        Vector3 rightEdge = Camera.main.ViewportToWorldPoint(Vector3.right);
+
+        // If the group reaches the right edge of the screen, reverse the direction and move down
+        if (direction == Vector3.right && groupRight >= rightEdge.x - 0.25f)
+        {
+            AdvanceRow();
+        }
+        // If the group reaches the left edge of the screen, reverse the direction and move down
+        else if (direction == Vector3.left && groupLeft <= leftEdge.x + 0.25f)
+        {
+            AdvanceRow();
+        }
+    }
+
+    void AdvanceRow()
+    {
+        // Reverse the direction of the entire group
+        direction.x *= -1f;
+
+        // Move the group down by one unit
+        Vector3 position = transform.position;
+        position.y -= 1f;
+        transform.position = position;
     }
 }
